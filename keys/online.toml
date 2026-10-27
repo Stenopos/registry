@@ -1,0 +1,7 @@
+# A key approved by the registry root key (ADR-0039 §4.4). The root key's
+# signature over this file is keys/online.toml.sig (namespace stenopos-registry).
+role = "online"
+purpose = "Signs snapshot.toml, re-signed daily by CI"
+key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILT0dbh8BoDSm8YC9nd3S08w/6CdBnUS8OejBql2VybE Stenopos Registry Online"
+created = "2026-10-27"
+expires = "2027-10-27"

@@ -1,0 +1,33 @@
+kind: pipeline
+type: docker
+name: checks
+
+trigger:
+  event:
+    - push
+    - pull_request
+    - tag
+
+image_pull_secrets:
+  - dockerconfig
+
+steps:
+  - name: checks
+    image: gitea.tuxsmash.com/stenopos/ci:latest
+    commands:
+      - stenopos-checks
+
+  - name: publish
+    image: gitea.tuxsmash.com/stenopos/ci:latest
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - stenopos-publish Stenopos/registry
+    depends_on:
+      - checks
+    when:
+      event:
+        - push
+      branch:
+        - main
