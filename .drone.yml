@@ -4,7 +4,10 @@ name: registry
 
 # The package registry (ADR-0039; the format is the registry's FORMAT.md).
 # Every push is checked from scratch: every rule and signature, and that the
-# change only adds versions and yanks (--previous). On main, and daily (the
+# change only adds versions and yanks (--previous); each added version is
+# re-derived from its source (`tagma registry verify`: the files at its commit
+# have the recorded hash, and its manifest, dependencies and code match the
+# entry, capabilities included). On main, and daily (the
 # Drone cron job `snapshot`), the online key re-signs snapshot.toml with a new
 # counter and a 7-day expiry; CI commits it to Gitea ([CI SKIP]: no rebuild)
 # and publishes to GitHub, where tagma reads the index. tagma is built from
@@ -60,11 +63,15 @@ steps:
         # be added or yanked.
         git fetch -q --unshallow origin 2>/dev/null || true
         before="$(printenv DRONE_COMMIT_BEFORE || true)"
+        # Re-deriving an entry compiles the package: tagma needs std.
+        export STENOPOS_STD="$PWD/../std" STENOPOS_CACHE="$PWD/../cache"
         if [ -n "$before" ] && git cat-file -e "$before^{commit}" 2>/dev/null; then
           git worktree add -q ../previous "$before"
           .ci/tagma registry check . --previous ../previous
+          .ci/tagma registry verify . --previous ../previous
         else
           .ci/tagma registry check .
+          .ci/tagma registry verify .
         fi
     depends_on:
       - tagma
