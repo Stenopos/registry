@@ -12,6 +12,14 @@ It does not host any code.
 | `index/<namespace>/<name>.toml` | A package: its owners and one entry per version |
 | `snapshot.toml` + `.sig` | The hash of every index file, with an expiry, signed daily by the online key |
 
+The exact format, including every signed statement and the content hash, is
+[FORMAT.md](FORMAT.md). Check a checkout against it, every signature
+included, with:
+
+```bash
+tagma registry check .
+```
+
 ## Verify a key statement
 
 ```bash
