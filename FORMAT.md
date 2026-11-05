@@ -90,7 +90,7 @@ signature = "U1NIU0lH..."
 | Field | Rule |
 |---|---|
 | `name` | The package; must match the file's path |
-| `repository` | An `https://` URL of the package's git repository (GitHub; the Gitea mirror is derived from it) |
+| `repository` | An `https://` URL of the package's git repository, made only of letters, digits and `- . _ /` (no `..`), at most 200 characters. A GitHub URL `https://github.com/<owner>/<repo>` has a mirror at `https://gitea.tuxsmash.com/<owner>/<repo>`, which tagma tries when GitHub fails |
 | `version` (array) | One table per published version, in increasing version order, no repeats |
 | `version.version` | The version |
 | `version.edition` | The language edition the package declares (`Tagma.toml`) |
