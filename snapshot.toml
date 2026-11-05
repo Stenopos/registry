@@ -1,0 +1,11 @@
+# Signed by the online key: snapshot.toml.sig (FORMAT.md).
+counter = 1
+created = "2026-11-05T14:11:33Z"
+expires = "2026-11-12T14:11:33Z"
+
+[files]
+"root.pub" = "sha256:599851ead655a1311b6c5cbd0f1bb21681802ae44b3c882c6e4d80904e4dbacd"
+"keys/online.pub" = "sha256:5e7af2b9e35daec5a161499efddd67195f5203a42cb91d016b4b661ddb21390e"
+"keys/online.toml" = "sha256:697df3ea8d3f38e4519dd9340cbb174656987868539fde977c29bd5253faf1e2"
+"keys/online.toml.sig" = "sha256:5bdb5901df233a0de2907560bcb39fff5bf390fe8d5862a15250f80369ea8b96"
+"index/.keep" = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
