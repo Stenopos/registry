@@ -1,0 +1,3 @@
+# CI scratch: the tagma it builds and the seed it builds it from.
+.ci/
+.seed

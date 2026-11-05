@@ -21,7 +21,9 @@ snapshot.toml.sig               the online key's signature over it
 ```
 
 Anything else at the top level is limited to `README.md`, `FORMAT.md`,
-`SECURITY.md`, the licences and CI files; the checker rejects other files in
+`SECURITY.md`, the licences and CI files (`.drone.yml`, `.gitignore`, and
+`syntagma.lock`, the Syntagma commit whose tagma CI runs); in a git checkout
+only tracked files count; the checker rejects other files in
 `keys/` and `index/`, except `index/.keep`, which keeps an empty index in git.
 
 ## Names

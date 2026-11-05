@@ -1,12 +1,21 @@
 kind: pipeline
 type: docker
-name: checks
+name: registry
+
+# The package registry (ADR-0039; the format is the registry's FORMAT.md).
+# Every push is checked from scratch: every rule and signature, and that the
+# change only adds versions and yanks (--previous). On main, and daily (the
+# Drone cron job `snapshot`), the online key re-signs snapshot.toml with a new
+# counter and a 7-day expiry; CI commits it to Gitea ([CI SKIP]: no rebuild)
+# and publishes to GitHub, where tagma reads the index. tagma is built from
+# the Syntagma commit pinned in syntagma.lock.
 
 trigger:
   event:
     - push
     - pull_request
     - tag
+    - cron
 
 image_pull_secrets:
   - dockerconfig
@@ -14,8 +23,107 @@ image_pull_secrets:
 steps:
   - name: checks
     image: gitea.tuxsmash.com/stenopos/ci:latest
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - stenopos-checks
+      - stenopos-fetch-asset Stenopos/Syntagma newest stenopos-bootstrap-seed-x86_64 .seed
+
+  - name: tagma
+    image: rust:1.80
+    commands:
+      - |
+        set -eu
+        pin="$(awk '$1=="commit"{print $2}' syntagma.lock)"
+        git clone -q https://gitea.tuxsmash.com/Stenopos/Syntagma.git ../Syntagma
+        git -C ../Syntagma checkout -q "$pin"
+        bash ../Syntagma/scripts/ci-llvm.sh
+        seed="$PWD/.seed"
+        if [ -f ../Syntagma/ci/seed/stenopos-bootstrap-seed-x86_64 ]; then seed="$PWD/../Syntagma/ci/seed/stenopos-bootstrap-seed-x86_64"; fi
+        chmod +x "$seed"
+        git clone -q https://gitea.tuxsmash.com/Stenopos/std.git ../std
+        git -C ../std checkout -q "$(awk '$1=="commit"{print $2}' ../Syntagma/std.lock)"
+        mkdir -p .ci
+        STENOPOS_STD="$PWD/../std" bash ../Syntagma/scripts/build-tagma.sh "$seed" .ci/tagma
+    depends_on:
+      - checks
+    extra_hosts:
+      - gitea.tuxsmash.com:192.168.60.2
+
+  - name: verify
+    image: rust:1.80
+    commands:
+      - |
+        set -eu
+        # Compare with the commit before this push: published entries may only
+        # be added or yanked.
+        git fetch -q --unshallow origin 2>/dev/null || true
+        before="$(printenv DRONE_COMMIT_BEFORE || true)"
+        if [ -n "$before" ] && git cat-file -e "$before^{commit}" 2>/dev/null; then
+          git worktree add -q ../previous "$before"
+          .ci/tagma registry check . --previous ../previous
+        else
+          .ci/tagma registry check .
+        fi
+    depends_on:
+      - tagma
+    when:
+      event:
+        - push
+        - pull_request
+        - tag
+    extra_hosts:
+      - gitea.tuxsmash.com:192.168.60.2
+
+  - name: sign
+    image: rust:1.80
+    environment:
+      REGISTRY_SIGNING_KEY:
+        from_secret: registry_signing_key
+      GITEA_TOKEN:
+        from_secret: gitea_token
+    commands:
+      - |
+        set -eu
+        if [ -z "$${REGISTRY_SIGNING_KEY:-}" ]; then
+          echo "FATAL: the Drone secret registry_signing_key is not set, so the snapshot can't be signed." >&2
+          echo "Add the online key's private half (keys/online.pub is its public half):" >&2
+          echo "  drone secret add --repository Stenopos/registry --name registry_signing_key --data @<online private key file>" >&2
+          exit 1
+        fi
+        if [ -z "$${GITEA_TOKEN:-}" ]; then
+          echo "FATAL: the Drone secret gitea_token is not available to Stenopos/registry; CI needs it to commit the signed snapshot." >&2
+          exit 1
+        fi
+        key=$(mktemp)
+        trap 'rm -f "$key"' EXIT
+        printf '%s\n' "$REGISTRY_SIGNING_KEY" > "$key"
+        chmod 600 "$key"
+        if [ "$(ssh-keygen -y -f "$key" | cut -d' ' -f1,2)" != "$(cut -d' ' -f1,2 keys/online.pub)" ]; then
+          echo "FATAL: registry_signing_key is not the online key in keys/online.pub." >&2
+          exit 1
+        fi
+        .ci/tagma registry snapshot . > snapshot.toml.new
+        mv snapshot.toml.new snapshot.toml
+        ssh-keygen -q -Y sign -f "$key" -n stenopos-registry-snapshot < snapshot.toml > snapshot.toml.sig
+        .ci/tagma registry check . --snapshot
+        counter="$(awk '$1=="counter"{print $3}' snapshot.toml)"
+        git add snapshot.toml snapshot.toml.sig
+        git -c user.name="Stenopos CI" -c user.email="ci@stenopos.invalid" commit -q -m "Snapshot $counter [CI SKIP]"
+        git -c http.extraheader="Authorization: token $GITEA_TOKEN" push -q https://gitea.tuxsmash.com/Stenopos/registry.git HEAD:refs/heads/main
+        echo "signed snapshot $counter"
+    depends_on:
+      - verify
+      - tagma
+    when:
+      event:
+        - push
+        - cron
+      branch:
+        - main
+    extra_hosts:
+      - gitea.tuxsmash.com:192.168.60.2
 
   - name: publish
     image: gitea.tuxsmash.com/stenopos/ci:latest
@@ -25,9 +133,10 @@ steps:
     commands:
       - stenopos-publish Stenopos/registry
     depends_on:
-      - checks
+      - sign
     when:
       event:
         - push
+        - cron
       branch:
         - main
