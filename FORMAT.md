@@ -64,10 +64,30 @@ namespaces = ["stenopos"]
 | `key` | One `ssh-ed25519` public key line; the same line is `keys/<key>.pub` |
 | `created`, `expires` | Dates; the key is valid on days `created` ≤ d < `expires` |
 | `namespaces` | Publishers only: the namespaces it may publish to |
+| `revoked` | Optional: a date, not before `created`, from which the key is compromised (below) |
 
 `keys/<key>.toml.sig` is an armored SSH signature (`ssh-keygen -Y sign`) by
 the root key over the file's exact bytes, namespace `stenopos-registry`. The
-root key signs nothing else. There is exactly one `online` key at a time.
+root key signs nothing else. There is exactly one `online` key that is not
+revoked at a time.
+
+### Revoking a key
+
+When a key is compromised, the root re-signs its statement with
+`revoked = "<date>"`: the date from which it must not be trusted (it may be
+in the past). Then:
+
+- A version the key signed with `published` on or after that date is
+  **revoked**. Its entry stays (the index is append-only), but tagma never
+  uses it: not for a new resolution, and, unlike a retracted version, not for a
+  lock that names it either. A build that has a revoked version locked
+  fails once its copy of the index is updated, naming the version.
+- A retraction the key signed with `retracted_on` on or after that date is void.
+- The key can't sign anything new: the registry's CI rejects a new entry or
+  retraction signed by it.
+- A revocation can't be removed or moved later.
+- A revoked `online` key is replaced by a new one under another name; the
+  snapshot is signed by the one that is not revoked.
 
 ## Packages: `index/<namespace>/<name>.toml`
 
@@ -103,16 +123,20 @@ signature = "U1NIU0lH..."
 | `version.published` | The date it was published |
 | `version.publisher` | The key that signed it: a `publisher` key valid on `published` whose `namespaces` include this package's |
 | `version.signature` | The publisher's signature over the entry statement (below) |
-| `version.yanked` | Optional; when present, `true`, with `yanked_on` and `yank_signature` |
-| `version.yanked_on` | The date it was yanked |
-| `version.yank_signature` | The publisher's signature over the yank statement (below) |
+| `version.retracted` | Optional; when present, `true`, with `retracted_on` and `retract_signature` |
+| `version.retracted_on` | The date it was retracted |
+| `version.retract_signature` | The publisher's signature over the retraction statement (below) |
 
-A published entry never changes, except that it can be yanked once.
+A published entry never changes, except that it can be retracted once.
 Versions are only ever added. The registry's CI rejects a commit that
-changes or removes an entry (it compares against the previous commit).
+changes or removes an entry (it compares against the previous commit), and
+a new entry or retraction that is not dated today or yesterday (UTC): dates can't
+be set back, so a key can't be used to slip a version in before its
+revocation.
 
-A **yanked** version is never chosen for a new resolution, but a lock file
-that already names it still builds.
+A **retracted** version is never chosen for a new resolution, but a lock file
+that already names it still builds. Publishers retract with `tagma retract`, which
+the package's CI runs on a signed `retract/<version>` tag.
 
 ### The entry statement
 
@@ -138,17 +162,17 @@ dependency, sorted by package name. The signature is an SSH signature with
 namespace `stenopos-registry-entry`, stored as the base64 of its binary form
 (the armored text's body, joined into one line).
 
-### The yank statement
+### The retraction statement
 
 ```
-stenopos-registry-yank 1
+stenopos-registry-retract 1
 package stenopos/json
 version 1.2.0
-yanked_on 2026-12-01
+retracted_on 2026-12-01
 ```
 
-Signed the same way, with namespace `stenopos-registry-yank`, by a publisher
-key for the package's namespace valid on `yanked_on`.
+Signed the same way, with namespace `stenopos-registry-retract`, by a publisher
+key for the package's namespace valid on `retracted_on`.
 
 ## The content hash
 
@@ -209,5 +233,5 @@ A failure stops the command and names the file and the check that failed.
 
 `tagma registry check [dir]` runs every rule in this document over a checkout,
 including all the signatures, and with `--previous <dir>` also checks that
-the change from that checkout only adds versions and yanks. The registry's
+the change from that checkout only adds versions and retractions. The registry's
 CI runs it on every push.

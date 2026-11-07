@@ -4,7 +4,7 @@ name: registry
 
 # The package registry (ADR-0039; the format is the registry's FORMAT.md).
 # Every push is checked from scratch: every rule and signature, and that the
-# change only adds versions and yanks (--previous); each added version is
+# change only adds versions and retractions (--previous); each added version is
 # re-derived from its source (`tagma registry verify`: the files at its commit
 # have the recorded hash, and its manifest, dependencies and code match the
 # entry, capabilities included). On main, and daily (the
@@ -60,7 +60,7 @@ steps:
       - |
         set -eu
         # Compare with the commit before this push: published entries may only
-        # be added or yanked.
+        # be added or retracted.
         git fetch -q --unshallow origin 2>/dev/null || true
         before="$(printenv DRONE_COMMIT_BEFORE || true)"
         # Re-deriving an entry compiles the package: tagma needs std.
