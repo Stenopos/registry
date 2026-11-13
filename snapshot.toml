@@ -1,7 +1,7 @@
 # Signed by the online key: snapshot.toml.sig (FORMAT.md).
-counter = 12
-created = "2026-11-13T18:15:50Z"
-expires = "2026-11-20T18:15:50Z"
+counter = 13
+created = "2026-11-13T22:09:46Z"
+expires = "2026-11-20T22:09:46Z"
 
 [files]
 "root.pub" = "sha256:599851ead655a1311b6c5cbd0f1bb21681802ae44b3c882c6e4d80904e4dbacd"
