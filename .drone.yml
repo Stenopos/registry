@@ -40,17 +40,17 @@ steps:
     commands:
       - |
         set -eu
-        pin="$(awk '$1=="commit"{print $2}' syntagma.lock)"
-        git clone -q https://gitea.tuxsmash.com/Stenopos/Syntagma.git ../Syntagma
-        git -C ../Syntagma checkout -q "$pin"
-        bash ../Syntagma/scripts/ci-llvm.sh
-        seed="$PWD/.seed"
-        if [ -f ../Syntagma/ci/seed/stenopos-bootstrap-seed-x86_64 ]; then seed="$PWD/../Syntagma/ci/seed/stenopos-bootstrap-seed-x86_64"; fi
-        chmod +x "$seed"
-        git clone -q https://gitea.tuxsmash.com/Stenopos/std.git ../std
-        git -C ../std checkout -q "$(awk '$1=="commit"{print $2}' ../Syntagma/std.lock)"
         mkdir -p .ci
-        STENOPOS_STD="$PWD/../std" bash ../Syntagma/scripts/build-tagma.sh "$seed" .ci/tagma
+        pin="$(awk '$1=="commit"{print $2}' syntagma.lock)"
+        git clone -q https://gitea.tuxsmash.com/Stenopos/Syntagma.git .ci/Syntagma
+        git -C .ci/Syntagma checkout -q "$pin"
+        bash .ci/Syntagma/scripts/ci-llvm.sh
+        seed="$PWD/.seed"
+        if [ -f .ci/Syntagma/ci/seed/stenopos-bootstrap-seed-x86_64 ]; then seed="$PWD/.ci/Syntagma/ci/seed/stenopos-bootstrap-seed-x86_64"; fi
+        chmod +x "$seed"
+        git clone -q https://gitea.tuxsmash.com/Stenopos/std.git .ci/std
+        git -C .ci/std checkout -q "$(awk '$1=="commit"{print $2}' .ci/Syntagma/std.lock)"
+        STENOPOS_STD="$PWD/.ci/std" bash .ci/Syntagma/scripts/build-tagma.sh "$seed" .ci/tagma
     depends_on:
       - checks
     extra_hosts:
@@ -66,7 +66,7 @@ steps:
         git fetch -q --unshallow origin 2>/dev/null || true
         before="$(printenv DRONE_COMMIT_BEFORE || true)"
         # Re-deriving an entry compiles the package: tagma needs std.
-        export STENOPOS_STD="$PWD/../std" STENOPOS_CACHE="$PWD/../cache"
+        export STENOPOS_STD="$PWD/.ci/std" STENOPOS_CACHE="$PWD/.ci/cache"
         if [ -n "$before" ] && git cat-file -e "$before^{commit}" 2>/dev/null; then
           git worktree add -q ../previous "$before"
           .ci/tagma registry check . --previous ../previous
