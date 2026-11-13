@@ -1,7 +1,7 @@
 # Signed by the online key: snapshot.toml.sig (FORMAT.md).
-counter = 13
-created = "2026-11-13T22:09:46Z"
-expires = "2026-11-20T22:09:46Z"
+counter = 14
+created = "2026-11-13T22:24:04Z"
+expires = "2026-11-20T22:24:04Z"
 
 [files]
 "root.pub" = "sha256:599851ead655a1311b6c5cbd0f1bb21681802ae44b3c882c6e4d80904e4dbacd"
@@ -12,3 +12,4 @@ expires = "2026-11-20T22:09:46Z"
 "keys/stenopos-ci.toml" = "sha256:f2aeb66fc4d0e1f9871cffa0c57619a3e17753ad07f96b5dd591e06e3514bd2f"
 "keys/stenopos-ci.toml.sig" = "sha256:b0b4e5631960b670b1eb01759bffecc7875bd1ac1e74b16fa0dc46e9a07bc82a"
 "index/.keep" = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+"index/stenopos/dotenv.toml" = "sha256:86c67abf9f63d125a9b26bfbe0c33e1be078d5d5bc7c2bde770577cc98086c9a"
