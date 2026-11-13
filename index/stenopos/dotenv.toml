@@ -1,0 +1,12 @@
+name = "stenopos/dotenv"
+repository = "https://github.com/Stenopos/dotenv"
+
+[[version]]
+version = "1.0.0"
+edition = "2026"
+commit = "7df828bbf16253be6b71406089dafa06b5c834e5"
+hash = "sha256:ba8c91f2e45d73a229a2efb01881af89a5b81e0d5087e282898f9d3d3b88262a"
+caps = ["File"]
+published = "2026-11-13"
+publisher = "stenopos-ci"
+signature = "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgNZdd0x9VXQekzeW+oJaYAojc41ZYVyaafTxDzMTS7C4AAAAXc3Rlbm9wb3MtcmVnaXN0cnktZW50cnkAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABArbDA+NMgFLa/K9mBc/yGSQBlkA/LCYlogV0Q8R+03d3v8ANNEq+7uQjsvVtdqJevfYi3mAkq0e1JQWM3eskWDg=="
