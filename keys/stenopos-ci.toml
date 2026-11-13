@@ -1,0 +1,8 @@
+# A key approved by the registry root key (ADR-0039 §4.4). The root key's
+# signature over this file is keys/stenopos-ci.toml.sig (namespace stenopos-registry).
+role = "publisher"
+purpose = "Signs the version entries Stenopos CI publishes from tagged Stenopos-org package repositories"
+key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDWXXdMfVV0HpM3lvqCWmAKI3ONWWFcmmn08Q8zE0uwu Stenopos CI publisher"
+created = "2026-11-13"
+expires = "2027-11-13"
+namespaces = ["stenopos"]
